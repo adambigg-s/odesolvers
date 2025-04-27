@@ -1,27 +1,52 @@
 use std::ops::Add;
 use std::ops::Mul;
 
+use odesolvers::buffer::Buffer;
 use odesolvers::*;
 
 const SIGMA: f32 = 10.;
 const RHO: f32 = 28.;
 const BETA: f32 = 8. / 3.;
 
+const PLOT_WIDTH: usize = 300;
+const PLOT_HEIGHT: usize = 70;
+
 fn main() {
     println!("lorentz attractor example");
 
-    let dt = 0.01;
+    let dt = 0.1;
     let steps = 1000;
 
     let lorentz = Vec3::build(1., 0., 0.);
-    let mut integrator = RungeKutta4::build(lorentz);
+    let mut integrator = RungeKutta4::build(lorentz, dt);
 
     let mut states = Vec::with_capacity(steps);
     (0..steps).for_each(|_| {
-        states.push(integrator.step(dt));
+        states.push(integrator.step());
     });
 
-    println!("states: {:?}", states);
+    let mut buffer = Buffer::build(PLOT_WIDTH, PLOT_HEIGHT);
+
+    let (minx, maxx) = states
+        .iter()
+        .map(|v| v.x)
+        .fold((f32::INFINITY, f32::NEG_INFINITY), |(min, max), val| (min.min(val), max.max(val)));
+    let (miny, maxy) = states
+        .iter()
+        .map(|v| v.y)
+        .fold((f32::INFINITY, f32::NEG_INFINITY), |(min, max), val| (min.min(val), max.max(val)));
+
+    states.iter().for_each(|state| {
+        let x_norm = (state.x - minx) / (maxx - minx);
+        let y_norm = (state.y - miny) / (maxy - miny);
+
+        let xp = (x_norm * buffer.width()) as usize;
+        let yp = (y_norm * buffer.height()) as usize;
+
+        buffer.set(xp, yp, 1);
+    });
+
+    buffer.render();
 }
 
 impl DynamicalSystem for Vec3 {
