@@ -1,4 +1,18 @@
-pub trait Float {
+use std::ops::Add;
+use std::ops::Div;
+use std::ops::Mul;
+use std::ops::Sub;
+
+pub trait Float
+where
+    Self: Mul<Self, Output = Self>
+        + Div<Self, Output = Self>
+        + Add<Self, Output = Self>
+        + Sub<Self, Output = Self>
+        + PartialOrd
+        + Sized
+        + Copy,
+{
     fn float(value: f64) -> Self;
 }
 
