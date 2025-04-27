@@ -4,9 +4,8 @@ use std::ops::Mul;
 use odesolvers::buffer::Buffer;
 use odesolvers::*;
 
-const SIGMA: f32 = 10.;
-const RHO: f32 = 28.;
-const BETA: f32 = 8. / 3.;
+const G: f32 = 9.81;
+const M: f32 = 10.;
 
 const PLOT_WIDTH: usize = 200;
 const PLOT_HEIGHT: usize = 50;
@@ -14,10 +13,10 @@ const PLOT_HEIGHT: usize = 50;
 fn main() {
     println!("\x1b[2J");
 
-    let dt = 0.01;
+    let dt = 0.001;
     let final_time = 100.;
-    let lorentz = Vec3::build(1., -1., 0.5);
-    let mut integrator = Integrator::build(lorentz, dt);
+    let initial = State::build(20., 0., 0., 0.5);
+    let mut integrator = Integrator::build(initial, dt);
     let mut buffer = Buffer::build(PLOT_WIDTH, PLOT_HEIGHT);
 
     let mut states = Vec::new();
@@ -51,6 +50,7 @@ fn main() {
             buffer.set(xp, yp);
         });
 
+
         print!("\x1b[0H");
 
         buffer.render();
@@ -62,39 +62,43 @@ fn main() {
     println!("lorenz attractor example");
 }
 
-impl DynamicalSystem for Vec3 {
-    fn derivative(&self) -> Self {
-        Vec3::build(
-            SIGMA * (self.y - self.x),
-            self.x * (RHO - self.z) - self.y,
-            self.x * self.y - BETA * self.z,
-        )
-    }
-}
-
-#[derive(Clone, Copy, Debug)]
-pub struct Vec3 {
+#[derive(Clone, Copy)]
+pub struct State {
     x: f32,
     y: f32,
-    z: f32,
+    vx: f32,
+    vy: f32,
 }
 
-impl Vec3 {
-    pub fn build(x: f32, y: f32, z: f32) -> Self {
-        Vec3 { x, y, z }
+impl DynamicalSystem for State {
+    fn derivative(&self) -> Self {
+        let r_sq = self.x * self.x + self.y * self.y;
+        let r = r_sq.sqrt();
+        let force_mag = -G * M / r_sq;
+
+        let fx = force_mag * self.x / r;
+        let fy = force_mag * self.y / r;
+
+        State::build(self.vx, self.vy, fx, fy)
     }
 }
 
-impl Add for Vec3 {
+impl State {
+    pub fn build(x: f32, y: f32, vx: f32, vy: f32) -> Self {
+        State { x, y, vx, vy }
+    }
+}
+
+impl Add for State {
     type Output = Self;
     fn add(self, rhs: Self) -> Self::Output {
-        Vec3::build(self.x + rhs.x, self.y + rhs.y, self.z + rhs.z)
+        State::build(self.x + rhs.x, self.y + rhs.y, self.vx + rhs.vx, self.vy + rhs.vy)
     }
 }
 
-impl Mul<f32> for Vec3 {
+impl Mul<f32> for State {
     type Output = Self;
     fn mul(self, rhs: f32) -> Self::Output {
-        Vec3::build(self.x * rhs, self.y * rhs, self.z * rhs)
+        State::build(self.x * rhs, self.y * rhs, self.vx * rhs, self.vy * rhs)
     }
 }
