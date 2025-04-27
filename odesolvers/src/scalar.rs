@@ -1,3 +1,5 @@
+#![allow(unexpected_cfgs)]
+
 use std::ops::Add;
 use std::ops::Div;
 use std::ops::Mul;
@@ -16,12 +18,12 @@ where
     fn float(value: f64) -> Self;
 }
 
-// this needs nightly to work
-// impl Float for f16 {
-//     fn float(value: f64) -> Self {
-//         value as f16
-//     }
-// }
+#[cfg(FALSE)]
+impl Float for f16 {
+    fn float(value: f64) -> Self {
+        value as f16
+    }
+}
 
 impl Float for f32 {
     fn float(value: f64) -> Self {
@@ -35,9 +37,9 @@ impl Float for f64 {
     }
 }
 
-// this needs nightly to work
-// impl Float for f128 {
-//     fn float(value: f64) -> Self {
-//         value as f128
-//     }
-// }
+#[cfg(FALSE)]
+impl Float for f128 {
+    fn float(value: f64) -> Self {
+        value as f128
+    }
+}
