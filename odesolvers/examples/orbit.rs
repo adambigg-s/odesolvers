@@ -44,8 +44,8 @@ fn main() {
             let x_norm = (state.x - minx) / (maxx - minx);
             let y_norm = (state.y - miny) / (maxy - miny);
 
-            let xp = (x_norm * buffer.width() * 2.) as usize;
-            let yp = (y_norm * buffer.height() * 4.) as usize;
+            let xp = (x_norm * buffer.width_f() * 2.) as usize;
+            let yp = (y_norm * buffer.height_f() * 4.) as usize;
 
             buffer.set(xp, yp);
         });

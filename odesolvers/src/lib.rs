@@ -1,4 +1,6 @@
 pub mod buffer;
+pub mod vec3;
+
 mod scalar;
 
 use std::ops::Add;
@@ -10,10 +12,8 @@ pub trait DynamicalSystem {
     fn derivative(&self) -> Self;
 }
 
-pub trait IntegrationStep<St> {
-    fn rungekutta4_step(&mut self) -> St;
-
-    fn rungekutta5_step(&mut self) -> St;
+trait IntegrationStep<St> {
+    fn rk4(&mut self) -> St;
 }
 
 pub struct Integrator<St, Ti> {
@@ -31,21 +31,21 @@ where
         Integrator { state: integrand, delta_time: dt, curr_time: Ti::default() }
     }
 
-    pub fn state(&self) -> St {
+    pub const fn state(&self) -> St {
         self.state
     }
 
-    pub fn delta_time(&self) -> Ti {
+    pub const fn delta_time(&self) -> Ti {
         self.delta_time
     }
 
-    pub fn curr_time(&self) -> Ti {
+    pub const fn curr_time(&self) -> Ti {
         self.curr_time
     }
 
     pub fn step(&mut self) -> St {
         self.curr_time = self.curr_time + self.delta_time;
-        self.rungekutta4_step()
+        self.rk4()
     }
 
     pub fn solve_until(&mut self, final_time: Ti) -> Vec<St> {
@@ -72,7 +72,7 @@ where
     St: DynamicalSystem + Mul<Ti, Output = St> + Add<St, Output = St> + Copy,
     Ti: Float,
 {
-    fn rungekutta4_step(&mut self) -> St {
+    fn rk4(&mut self) -> St {
         let k1 = self.state.derivative();
         let k2 = (self.state + k1 * (self.delta_time / Ti::float(2.))).derivative();
         let k3 = (self.state + k2 * (self.delta_time / Ti::float(2.))).derivative();
@@ -83,9 +83,5 @@ where
             + (k2 + k3) * (self.delta_time / Ti::float(3.));
 
         self.state
-    }
-
-    fn rungekutta5_step(&mut self) -> St {
-        todo!()
     }
 }
