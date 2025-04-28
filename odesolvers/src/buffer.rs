@@ -21,9 +21,6 @@ pub struct Buffer {
     dots: Vec<DotState>,
     foreground: Vec3<u8>,
     background: Vec3<u8>,
-
-    padx: usize,
-    pady: usize,
 }
 
 impl Buffer {
@@ -36,8 +33,6 @@ impl Buffer {
             dots: vec![DotState::Off; width * height],
             foreground: FOREGROUND_DEFAULT,
             background: BACKGROUND_DEFAULT,
-            padx: 3,
-            pady: 3,
         }
     }
 
