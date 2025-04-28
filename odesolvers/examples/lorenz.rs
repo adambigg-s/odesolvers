@@ -12,10 +12,8 @@ const PLOT_WIDTH: usize = 220;
 const PLOT_HEIGHT: usize = 70;
 
 fn main() {
-    println!("\x1b[2J");
-
-    let dt = 0.025;
-    let final_time = 120.;
+    let dt = 0.005;
+    let final_time = 250.;
     let lorentz = LorenzSystem::build(1., 0., 0.5);
     let mut integrator = Integrator::build(lorentz, dt);
     let mut buffer = Buffer::build(PLOT_WIDTH, PLOT_HEIGHT);
