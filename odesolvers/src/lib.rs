@@ -12,43 +12,43 @@ pub trait DynamicalSystem {
     fn derivative(&self) -> Self;
 }
 
-trait IntegrationStep<St> {
-    fn rk4(&mut self) -> St;
+trait IntegrationStep<S> {
+    fn rk4(&mut self) -> S;
 }
 
-pub struct Integrator<St, Ti> {
-    state: St,
-    delta_time: Ti,
-    curr_time: Ti,
+pub struct Integrator<S, T> {
+    state: S,
+    delta_time: T,
+    curr_time: T,
 }
 
-impl<St, Ti> Integrator<St, Ti>
+impl<S, T> Integrator<S, T>
 where
-    St: DynamicalSystem + Mul<Ti, Output = St> + Add<St, Output = St> + Copy,
-    Ti: Float + Default,
+    S: DynamicalSystem + Mul<T, Output = S> + Add<S, Output = S> + Copy,
+    T: Float + Default,
 {
-    pub fn build(integrand: St, dt: Ti) -> Self {
-        Integrator { state: integrand, delta_time: dt, curr_time: Ti::default() }
+    pub fn build(integrand: S, dt: T) -> Self {
+        Integrator { state: integrand, delta_time: dt, curr_time: T::default() }
     }
 
-    pub const fn state(&self) -> St {
+    pub const fn state(&self) -> S {
         self.state
     }
 
-    pub const fn delta_time(&self) -> Ti {
+    pub const fn delta_time(&self) -> T {
         self.delta_time
     }
 
-    pub const fn curr_time(&self) -> Ti {
+    pub const fn curr_time(&self) -> T {
         self.curr_time
     }
 
-    pub fn step(&mut self) -> St {
+    pub fn step(&mut self) -> S {
         self.curr_time = self.curr_time + self.delta_time;
         self.rk4()
     }
 
-    pub fn solve_until(&mut self, final_time: Ti) -> Vec<St> {
+    pub fn solve_until(&mut self, final_time: T) -> Vec<S> {
         let mut states = Vec::new();
         while self.curr_time < final_time {
             states.push(self.step());
@@ -57,7 +57,7 @@ where
         states
     }
 
-    pub fn solve_with_time(&mut self, final_time: Ti) -> Vec<(Ti, St)> {
+    pub fn solve_with_time(&mut self, final_time: T) -> Vec<(T, S)> {
         let mut output = Vec::new();
         while self.curr_time < final_time {
             output.push((self.curr_time, self.step()));
@@ -67,20 +67,20 @@ where
     }
 }
 
-impl<St, Ti> IntegrationStep<St> for Integrator<St, Ti>
+impl<S, T> IntegrationStep<S> for Integrator<S, T>
 where
-    St: DynamicalSystem + Mul<Ti, Output = St> + Add<St, Output = St> + Copy,
-    Ti: Float,
+    S: DynamicalSystem + Mul<T, Output = S> + Add<S, Output = S> + Copy,
+    T: Float,
 {
-    fn rk4(&mut self) -> St {
+    fn rk4(&mut self) -> S {
         let k1 = self.state.derivative();
-        let k2 = (self.state + k1 * (self.delta_time / Ti::float(2.))).derivative();
-        let k3 = (self.state + k2 * (self.delta_time / Ti::float(2.))).derivative();
+        let k2 = (self.state + k1 * (self.delta_time / T::float(2.))).derivative();
+        let k3 = (self.state + k2 * (self.delta_time / T::float(2.))).derivative();
         let k4 = (self.state + k3 * self.delta_time).derivative();
 
         self.state = self.state
-            + (k1 + k4) * (self.delta_time / Ti::float(6.))
-            + (k2 + k3) * (self.delta_time / Ti::float(3.));
+            + (k1 + k4) * (self.delta_time / T::float(6.))
+            + (k2 + k3) * (self.delta_time / T::float(3.));
 
         self.state
     }

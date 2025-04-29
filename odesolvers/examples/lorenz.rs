@@ -15,7 +15,7 @@ fn main() {
     println!("\x1b[2J");
     let dt = 0.005;
     let final_time = 250.;
-    let lorentz = LorenzSystem::build(1., 0., 0.5);
+    let lorentz = LorenzSystem::build(0.01, 0., -0.01);
     let mut integrator = Integrator::build(lorentz, dt);
     let mut buffer = Buffer::build(PLOT_WIDTH, PLOT_HEIGHT);
 
