@@ -8,36 +8,37 @@ fn main() {
     println!("\x1b[2J");
     let dt = 0.001;
     let final_time = 120.;
-    let initial_state = [0.01, 0., -0.01];
-    let mut integrator = Integrator::build(initial_state, dt, lorenz_dynamics);
+    let initial_state = [1., -10.];
+    let mut integrator = Integrator::build(initial_state, dt, harmonic_oscillator_dynamics);
     let mut buffer = Buffer::build(PLOT_WIDTH, PLOT_HEIGHT);
 
     let mut states = Vec::new();
+    let mut times = Vec::new();
     while integrator.curr_time() < final_time {
         states.push(integrator.step());
+        times.push(integrator.curr_time());
 
         if states.len() % 100 != 0 {
             continue;
         }
 
-        buffer.plot_linstrip_2d(states.iter().map(|state| state[0]), states.iter().map(|state| state[1]));
+        buffer.plot_linstrip_2d(times.clone().into_iter(), states.iter().map(|state| state[0]));
         buffer.render();
         buffer.clear();
     }
 
-    println!("lorenz attractor example");
+    println!("harmonic oscillator example");
 }
 
-const SIGMA: f64 = 10.;
-const RHO: f64 = 28.;
-const BETA: f64 = 8. / 3.;
+const C: f32 = 0.5;
+const K: f32 = 3.;
+const M: f32 = 1.;
 
 #[rustfmt::skip]
-fn lorenz_dynamics(state: &[f64; 3]) -> [f64; 3] {
-    let [x, y, z] = state;
+fn harmonic_oscillator_dynamics(state: &[f32; 2]) -> [f32; 2] {
+    let [x, v] = state;
     [
-        SIGMA * (y - x),
-        x * (RHO - z) - y,
-        x * y - BETA * z,
+        *v,
+        -K / M * x + -C / M * v,
     ]
 }

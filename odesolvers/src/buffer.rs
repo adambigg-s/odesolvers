@@ -32,6 +32,8 @@ impl Default for Dot {
 pub struct Buffer {
     height: usize,
     width: usize,
+    domain: (f32, f32),
+    range: (f32, f32),
     dots: Vec<Dot>,
     text: Vec<Option<char>>,
     foreground: Vec3<u8>,
@@ -45,6 +47,8 @@ impl Buffer {
         Buffer {
             height,
             width,
+            domain: (-100., 100.),
+            range: (-100., 100.),
             dots: vec![Dot::default(); width * height],
             text: vec![None; width * height],
             foreground: FOREGROUND_DEFAULT,
@@ -124,7 +128,9 @@ impl Buffer {
         );
 
         let domain = self.min_max(&xs);
+        self.expand_domain(domain);
         let range = self.min_max(&ys);
+        self.expand_range(range);
 
         for (p1, p2) in xs.iter().zip(ys.iter()).zip(xs.iter().skip(1).zip(ys.iter().skip(1))) {
             let (x0, y0) = p1;
@@ -140,6 +146,18 @@ impl Buffer {
                 Dot::build(FOREGROUND_DEFAULT, BACKGROUND_DEFAULT, true),
             );
         }
+    }
+
+    fn expand_domain(&mut self, vals: (f32, f32)) {
+        let (x1, x2) = vals;
+        let (c1, c2) = self.domain;
+        self.domain = (c1.max(x1), c2.min(x2));
+    }
+
+    fn expand_range(&mut self, vals: (f32, f32)) {
+        let (x1, x2) = vals;
+        let (c1, c2) = self.range;
+        self.range = (c1.min(x1), c2.max(x2));
     }
 
     pub fn render(&self) {
