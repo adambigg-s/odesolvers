@@ -4,9 +4,9 @@ use crate::scalar::Floating;
 
 pub struct Integrator<Float, Dynamics, const N: usize> {
     state: State<Float, N>,
-    del_t: Float,
-    curr_time: Float,
-    deriv: Dynamics,
+    dt: Float,
+    time: Float,
+    ddt: Dynamics,
 }
 
 impl<Float, Dynamics, const N: usize> Integrator<Float, Dynamics, N>
@@ -17,9 +17,9 @@ where
     pub fn build(state: [Float; N], delta_time: Float, dynamics_function: Dynamics) -> Self {
         Integrator {
             state: State::build(state),
-            del_t: delta_time,
-            curr_time: Float::default(),
-            deriv: dynamics_function,
+            dt: delta_time,
+            time: Float::default(),
+            ddt: dynamics_function,
         }
     }
 
@@ -28,21 +28,21 @@ where
     }
 
     pub const fn delta_time(&self) -> Float {
-        self.del_t
+        self.dt
     }
 
     pub const fn curr_time(&self) -> Float {
-        self.curr_time
+        self.time
     }
 
     pub fn step(&mut self) -> [Float; N] {
-        self.curr_time = self.curr_time + self.del_t;
+        self.time = self.time + self.dt;
         self.rk4()
     }
 
     pub fn solve_until(&mut self, final_time: Float) -> Vec<[Float; N]> {
         let mut states = Vec::new();
-        while self.curr_time < final_time {
+        while self.time < final_time {
             states.push(self.step());
         }
 
@@ -51,8 +51,8 @@ where
 
     pub fn solve_with_time(&mut self, final_time: Float) -> Vec<(Float, [Float; N])> {
         let mut output = Vec::new();
-        while self.curr_time < final_time {
-            output.push((self.curr_time, self.step()));
+        while self.time < final_time {
+            output.push((self.time, self.step()));
         }
 
         output
@@ -65,15 +65,15 @@ where
     Dynamics: Fn(&[Float; N]) -> [Float; N],
 {
     fn rk4(&mut self) -> [Float; N] {
-        let k1 = State::build((self.deriv)(&self.state.inner));
-        let k2 = State::build((self.deriv)(&(self.state + k1 * (self.del_t / Float::floatify(2.))).inner));
-        let k3 = State::build((self.deriv)(&(self.state + k2 * (self.del_t / Float::floatify(2.))).inner));
-        let k4 = State::build((self.deriv)(&(self.state + k3 * self.del_t).inner));
+        let k1 = State::build((self.ddt)(&self.state.inner));
+        let k2 = State::build((self.ddt)(&(self.state + k1 * (self.dt / Float::floatify(2.))).inner));
+        let k3 = State::build((self.ddt)(&(self.state + k2 * (self.dt / Float::floatify(2.))).inner));
+        let k4 = State::build((self.ddt)(&(self.state + k3 * self.dt).inner));
 
         self.state = self.state
-            + (k1 + k4) * (self.del_t / Float::floatify(6.))
-            + (k2 + k3) * (self.del_t / Float::floatify(3.));
+            + (k1 + k4) * (self.dt / Float::floatify(6.))
+            + (k2 + k3) * (self.dt / Float::floatify(3.));
 
-        self.state.inner
+        self.state()
     }
 }

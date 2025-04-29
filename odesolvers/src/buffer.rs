@@ -1,5 +1,6 @@
 use std::io::Write;
 
+use crate::scalar::Floating;
 use crate::vec3::Vec3;
 
 const BRAILLE_START: u16 = 0x2800_u16;
@@ -7,18 +8,32 @@ const BRAILLE_WIDTH: usize = 2_usize;
 const BRAILLE_HEIGHT: usize = 4_usize;
 
 const FOREGROUND_DEFAULT: Vec3<u8> = Vec3::build(0, 0, 255);
-const BACKGROUND_DEFAULT: Vec3<u8> = Vec3::build(240, 240, 240);
+const BACKGROUND_DEFAULT: Vec3<u8> = Vec3::build(220, 220, 220);
 
-#[derive(Clone, Copy, PartialEq)]
-enum DotState {
-    Off,
-    On,
+#[derive(Clone, Copy)]
+struct Dot {
+    fg: Vec3<u8>,
+    bg: Vec3<u8>,
+    active: bool,
+}
+
+impl Dot {
+    fn build(fg: Vec3<u8>, bg: Vec3<u8>, active: bool) -> Dot {
+        Dot { fg, bg, active }
+    }
+}
+
+impl Default for Dot {
+    fn default() -> Self {
+        Dot::build(FOREGROUND_DEFAULT, BACKGROUND_DEFAULT, false)
+    }
 }
 
 pub struct Buffer {
     height: usize,
     width: usize,
-    dots: Vec<DotState>,
+    dots: Vec<Dot>,
+    text: Vec<Option<char>>,
     foreground: Vec3<u8>,
     background: Vec3<u8>,
 }
@@ -30,7 +45,8 @@ impl Buffer {
         Buffer {
             height,
             width,
-            dots: vec![DotState::Off; width * height],
+            dots: vec![Dot::default(); width * height],
+            text: vec![None; width * height],
             foreground: FOREGROUND_DEFAULT,
             background: BACKGROUND_DEFAULT,
         }
@@ -63,27 +79,17 @@ impl Buffer {
     }
 
     pub fn clear(&mut self) {
-        self.dots.iter_mut().for_each(|dot| *dot = DotState::Off)
+        self.dots.iter_mut().for_each(|dot| *dot = Dot::default())
     }
 
-    pub fn set(&mut self, x: usize, y: usize) -> bool {
-        if !self.inbounds(x, y) {
-            return false;
-        }
-
-        let index = self.index(x, y);
-        self.dots[index] = DotState::On;
-
-        true
-    }
-
-    pub fn plot_points_2d<ItrX, ItrY>(&mut self, x_data: ItrX, y_data: ItrY)
+    pub fn plot_points_2d<ItrX, ItrY, Float>(&mut self, x_data: ItrX, y_data: ItrY)
     where
-        ItrX: IntoIterator<Item = f32>,
-        ItrY: IntoIterator<Item = f32>,
+        ItrX: IntoIterator<Item = Float>,
+        ItrY: IntoIterator<Item = Float>,
+        Float: Floating,
     {
-        let xs: Vec<f32> = x_data.into_iter().collect();
-        let ys: Vec<f32> = y_data.into_iter().collect();
+        let xs: Vec<f32> = x_data.into_iter().map(|value| value.to_f32()).collect();
+        let ys: Vec<f32> = y_data.into_iter().map(|value| value.to_f32()).collect();
 
         assert!(
             xs.len() == ys.len(),
@@ -97,17 +103,18 @@ impl Buffer {
 
         xs.iter().zip(ys.iter()).for_each(|(x, y)| {
             let (sx, sy) = self.aff_to_ss(*x, *y, domain, range);
-            self.set(sx, sy);
+            self.set(sx, sy, Dot::build(FOREGROUND_DEFAULT, BACKGROUND_DEFAULT, true));
         });
     }
 
-    pub fn plot_linstrip_2d<ItrX, ItrY>(&mut self, x_data: ItrX, y_data: ItrY)
+    pub fn plot_linstrip_2d<ItrX, ItrY, Float>(&mut self, x_data: ItrX, y_data: ItrY)
     where
-        ItrX: IntoIterator<Item = f32>,
-        ItrY: IntoIterator<Item = f32>,
+        ItrX: IntoIterator<Item = Float>,
+        ItrY: IntoIterator<Item = Float>,
+        Float: Floating,
     {
-        let xs: Vec<f32> = x_data.into_iter().collect();
-        let ys: Vec<f32> = y_data.into_iter().collect();
+        let xs: Vec<f32> = x_data.into_iter().map(|value| value.to_f32()).collect();
+        let ys: Vec<f32> = y_data.into_iter().map(|value| value.to_f32()).collect();
 
         assert!(
             xs.len() == ys.len(),
@@ -125,11 +132,29 @@ impl Buffer {
             let (sx0, sy0) = self.aff_to_ss(*x0, *y0, domain, range);
             let (sx1, sy1) = self.aff_to_ss(*x1, *y1, domain, range);
 
-            self.bresen_plot_line(sx0 as isize, sy0 as isize, sx1 as isize, sy1 as isize);
+            self.bresen_plot_line(
+                sx0 as isize,
+                sy0 as isize,
+                sx1 as isize,
+                sy1 as isize,
+                Dot::build(FOREGROUND_DEFAULT, BACKGROUND_DEFAULT, true),
+            );
         }
     }
 
-    pub fn bresen_plot_line(&mut self, mut x0: isize, mut y0: isize, x1: isize, y1: isize) {
+    pub fn render(&self) {
+        let foreground =
+            format!("\x1b[38;2;{};{};{}m", self.foreground.x, self.foreground.y, self.foreground.z);
+        let background =
+            format!("\x1b[48;2;{};{};{}m", self.background.x, self.background.y, self.background.z);
+        let reset = "\x1b[0m";
+        print!("{}{}", foreground, background);
+        print!("\x1b[?25l\x1b[0H{}\x1b[?25h", self.render_to_string());
+        print!("{}", reset);
+        std::io::stdout().flush().unwrap();
+    }
+
+    fn bresen_plot_line(&mut self, mut x0: isize, mut y0: isize, x1: isize, y1: isize, dot: Dot) {
         let dx = (x1 - x0).abs();
         let dy = -(y1 - y0).abs();
 
@@ -141,7 +166,7 @@ impl Buffer {
         let mut err = dx + dy;
 
         loop {
-            self.set(x0 as usize, y0 as usize);
+            self.set(x0 as usize, y0 as usize, dot);
 
             if x0 == x1 && y0 == y1 {
                 break;
@@ -166,16 +191,15 @@ impl Buffer {
         }
     }
 
-    pub fn render(&self) {
-        let foreground =
-            format!("\x1b[38;2;{};{};{}m", self.foreground.x, self.foreground.y, self.foreground.z);
-        let background =
-            format!("\x1b[48;2;{};{};{}m", self.background.x, self.background.y, self.background.z);
-        let reset = "\x1b[0m";
-        print!("{}{}", foreground, background);
-        print!("\x1b[?25l\x1b[0H{}\x1b[?25h", self.render_to_string());
-        print!("{}", reset);
-        std::io::stdout().flush().unwrap();
+    fn set(&mut self, x: usize, y: usize, dot: Dot) -> bool {
+        if !self.inbounds(x, y) {
+            return false;
+        }
+
+        let index = self.index(x, y);
+        self.dots[index] = dot;
+
+        true
     }
 
     fn aff_to_ss(&self, x: f32, y: f32, domain: (f32, f32), range: (f32, f32)) -> (usize, usize) {
@@ -210,7 +234,7 @@ impl Buffer {
         result
     }
 
-    fn get_dot(&self, x: usize, y: usize) -> Option<DotState> {
+    fn get_dot(&self, x: usize, y: usize) -> Option<Dot> {
         if !self.inbounds(x, y) {
             return None;
         }
@@ -230,7 +254,7 @@ impl Buffer {
                 let y = cy * BRAILLE_HEIGHT + dy;
 
                 if let Some(dotstate) = self.get_dot(x, y) {
-                    if dotstate == DotState::On {
+                    if dotstate.active {
                         pattern |= 1_u8 << dot_bit;
                     }
                 }
