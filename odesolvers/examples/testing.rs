@@ -10,7 +10,9 @@ fn main() {
     let final_time = 120.;
     let initial_state = [0.01, 0., -0.01];
     let mut integrator = Integrator::build(initial_state, dt, lorenz_dynamics);
+
     let mut plot = Plot::build(PLOT_HEIGHT, PLOT_WIDTH);
+    plot.set_space((-15., 15.), (-15., 15.));
 
     let mut states = Vec::new();
     while integrator.curr_time() < final_time {
@@ -19,10 +21,10 @@ fn main() {
         if states.len() % 100 != 0 {
             continue;
         }
-    }
-
-    for state in states {
-        plot.plot_dot(state[0] as isize, state[1] as isize);
+        states.clone().into_iter().for_each(|state| {
+            plot.plot_point(state[0] as f32, state[1] as f32);
+        });
+        plot.render();
     }
 
     println!("lorenz attractor example");

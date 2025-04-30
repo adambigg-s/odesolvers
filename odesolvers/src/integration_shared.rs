@@ -1,13 +1,32 @@
 use std::ops::Add;
 use std::ops::Mul;
 
+use crate::scalar::Floating;
+
 pub trait IntegrationStep<State> {
     fn rk4(&mut self) -> State;
+}
+
+pub trait Norm<Float> {
+    fn norm(&self) -> Float;
 }
 
 #[derive(Clone, Copy)]
 pub struct State<Float, const N: usize> {
     pub inner: [Float; N],
+}
+
+impl<Float, const N: usize> State<Float, N>
+where
+    Float: Copy,
+{
+    pub const fn build(inner: [Float; N]) -> Self {
+        State { inner }
+    }
+
+    pub const fn values(&self) -> [Float; N] {
+        self.inner
+    }
 }
 
 impl<Float, const N: usize> Add for State<Float, N>
@@ -42,15 +61,16 @@ where
     }
 }
 
-impl<Float, const N: usize> State<Float, N>
+impl<Float, const N: usize> Norm<Float> for State<Float, N>
 where
-    Float: Copy,
+    Float: Floating + Add<Output = Float>,
 {
-    pub const fn build(inner: [Float; N]) -> Self {
-        State { inner }
-    }
+    fn norm(&self) -> Float {
+        let mut sum = Float::floatify(0.);
+        (0..N).for_each(|idx| {
+            sum = sum + self.inner[idx] * self.inner[idx];
+        });
 
-    pub const fn values(&self) -> [Float; N] {
-        self.inner
+        sum
     }
 }
