@@ -1,4 +1,5 @@
-use crate::plot_utils::Buffer;
+use crate::plot_utils::{Buffer, LineTracer};
+use crate::scalar::Floating;
 use crate::vec3::Vec3;
 
 const BRAILLE_START: u16 = 0x2800_u16;
@@ -29,45 +30,56 @@ impl Plot {
         self.plot.buff.fill(BACKGROUND_DEFAULT);
     }
 
-    pub fn set_point(&mut self, x: f32, y: f32) -> bool {
-        if !self.in_range(x, y) {
+    pub fn plot_point(&mut self, x: f32, y: f32) -> bool {
+        if !self.within_plot(x, y) {
             return false;
         }
-        let (px, py) = self.to_ss(x, y);
-        self.plot.set(px, py, FOREGROUND_DEFAULT);
+        let (plotx, ploty) = self.to_plotspace(x, y);
+        self.plot.set(plotx, ploty, FOREGROUND_DEFAULT);
         true
     }
 
-    pub fn in_range(&self, x: f32, y: f32) -> bool {
-        self.xrange.contains(x) && self.yrange.contains(y)
+    pub fn plot_line<T>(&mut self, x0: T, y0: T, x1: T, y1: T)
+    where
+        T: Floating,
+    {
+        let (x0, y0, x1, y1) = (x0.to_f32(), y0.to_f32(), x1.to_f32(), y1.to_f32());
+        if !self.within_plot(x0, y0) || !self.within_plot(x1, y1) {
+            return;
+        }
+        let (x0, y0) = self.to_plotspace(x0, y0);
+        let (x1, y1) = self.to_plotspace(x1, y1);
+        let tracer = LineTracer::build(x0 as isize, y0 as isize, x1 as isize, y1 as isize);
+        for (x, y) in tracer {
+            self.plot.set(x as usize, y as usize, FOREGROUND_DEFAULT);
+        }
     }
 
     pub fn display(&self) {
-        println!("\x1b[0H{}", self.to_string());
-    }
-
-    #[allow(clippy::inherent_to_string)]
-    pub fn to_string(&self) -> String {
-        let mut result = String::new();
+        let mut string = String::new();
         (0..self.plot.height).for_each(|y| {
             (0..self.plot.width).for_each(|x| {
                 let chr = self.plot.get(x, y).unwrap();
-                if chr == FOREGROUND_DEFAULT {
-                    result.push('#');
+                if chr != BACKGROUND_DEFAULT {
+                    string.push('*');
                 }
                 else {
-                    result.push(' ');
+                    string.push(' ');
                 }
             });
-            result.push('\n');
+            string.push('\n');
         });
 
-        result
+        println!("\x1b[0H{}", string);
     }
 
-    fn to_ss(&self, x: f32, y: f32) -> (usize, usize) {
-        let xnorm = (x - self.xrange.min) / (self.xrange.max - self.xrange.min);
-        let ynorm = 1. - (y - self.yrange.min) / (self.yrange.max - self.yrange.min);
+    fn within_plot(&self, x: f32, y: f32) -> bool {
+        self.xrange.contains(x) && self.yrange.contains(y)
+    }
+
+    fn to_plotspace(&self, x: f32, y: f32) -> (usize, usize) {
+        let xnorm = self.xrange.normalize(x);
+        let ynorm = 1. - self.yrange.normalize(y);
 
         let xscreen = (xnorm * (self.plot.width as f32)).floor() as usize;
         let yscreen = (ynorm * (self.plot.height as f32)).floor() as usize;
@@ -83,7 +95,7 @@ pub struct Interval<T> {
 
 impl<T> Interval<T>
 where
-    T: PartialOrd + Copy,
+    T: Floating + Copy,
 {
     fn build(min: T, max: T) -> Interval<T> {
         Interval { min, max }
@@ -91,5 +103,9 @@ where
 
     fn contains(&self, value: T) -> bool {
         (self.min..self.max).contains(&value)
+    }
+
+    fn normalize(&self, value: T) -> T {
+        (value - self.min) / (self.max - self.min)
     }
 }

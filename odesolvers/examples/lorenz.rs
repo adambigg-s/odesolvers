@@ -6,7 +6,7 @@ const PLOT_HEIGHT: usize = 70;
 
 fn main() {
     println!("\x1b[2J");
-    let dt = 0.001;
+    let dt = 0.01;
     let final_time = 120.;
     let initial_state = [0.01, 0., -0.01];
     let mut integrator = Integrator::build(initial_state, dt, lorenz_dynamics);
@@ -16,9 +16,11 @@ fn main() {
     while integrator.curr_time() < final_time {
         states.push(integrator.step());
 
-        for state in &states {
-            plot.set_point(state[0] as f32, state[1] as f32);
-        }
+        plot.clear();
+        states.windows(2).for_each(|window| {
+            let (start, end) = (window[0], window[1]);
+            plot.plot_line(start[0], start[1], end[0], end[1]);
+        });
         plot.display();
     }
 

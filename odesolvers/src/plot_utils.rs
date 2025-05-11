@@ -31,11 +31,11 @@ where
         Some(self.buff[index])
     }
 
-    pub fn index(&self, x: usize, y: usize) -> usize {
+    fn index(&self, x: usize, y: usize) -> usize {
         self.width * y + x
     }
 
-    pub fn inbounds(&self, x: usize, y: usize) -> bool {
+    fn inbounds(&self, x: usize, y: usize) -> bool {
         x < self.width && y < self.height
     }
 }

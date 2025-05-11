@@ -1,4 +1,5 @@
 use crate::integration_shared::IntegrationStep;
+use crate::integration_shared::Norm;
 use crate::integration_shared::State;
 use crate::scalar::Floating;
 
@@ -73,6 +74,11 @@ where
         self.state = self.state
             + (k1 + k4) * (self.dt / Float::floatify(6.))
             + (k2 + k3) * (self.dt / Float::floatify(3.));
+
+        let _val = self.state.norm();
+        if _val < Float::floatify(f64::EPSILON) {
+            panic!();
+        }
 
         self.state()
     }
