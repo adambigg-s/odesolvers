@@ -16,7 +16,9 @@ where
         + Copy,
 {
     fn floatify(value: f64) -> Self;
+
     fn to_f32(self) -> f32;
+
     fn to_f64(self) -> f64;
 }
 

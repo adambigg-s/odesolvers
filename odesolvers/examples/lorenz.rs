@@ -1,4 +1,4 @@
-use odesolvers::buffer::Buffer;
+use odesolvers::plot::Plot;
 use odesolvers::runge_kutta::Integrator;
 
 const PLOT_WIDTH: usize = 220;
@@ -10,22 +10,19 @@ fn main() {
     let final_time = 120.;
     let initial_state = [0.01, 0., -0.01];
     let mut integrator = Integrator::build(initial_state, dt, lorenz_dynamics);
-    let mut buffer = Buffer::build(PLOT_WIDTH, PLOT_HEIGHT);
 
     let mut states = Vec::new();
+    let mut plot = Plot::build(PLOT_HEIGHT, PLOT_WIDTH);
     while integrator.curr_time() < final_time {
         states.push(integrator.step());
 
-        if states.len() % 100 != 0 {
-            continue;
+        for state in &states {
+            plot.set_point(state[0] as f32, state[1] as f32);
         }
-
-        buffer.plot_linstrip_2d(states.iter().map(|state| state[0]), states.iter().map(|state| state[1]));
-        buffer.render();
-        buffer.clear();
+        plot.display();
     }
 
-    println!("lorenz attractor example");
+    println!("lorenz attractor example with new plot");
 }
 
 const SIGMA: f64 = 10.;

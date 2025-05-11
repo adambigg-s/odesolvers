@@ -5,8 +5,8 @@ use crate::scalar::Floating;
 pub struct Integrator<Float, Dynamics, const N: usize> {
     state: State<Float, N>,
     dt: Float,
-    time: Float,
     ddt: Dynamics,
+    time: Float,
 }
 
 impl<Float, Dynamics, const N: usize> Integrator<Float, Dynamics, N>
@@ -18,8 +18,8 @@ where
         Integrator {
             state: State::build(state),
             dt: delta_time,
-            time: Float::default(),
             ddt: dynamics_function,
+            time: Float::default(),
         }
     }
 
