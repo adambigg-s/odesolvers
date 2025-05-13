@@ -21,10 +21,17 @@ fn main() {
             let (start, end) = (window[0], window[1]);
             plot.plot_line(start[0], start[1], end[0], end[1]);
         });
+
+        plot.alter_brush().front(255, 10, 10);
+        plot.plot_point(10., 10.);
+        plot.brush_default();
+
         plot.display();
+
+        println!("size of string buffer: {}", plot.output_string.capacity());
     }
 
-    println!("lorenz attractor example with new plot");
+    println!("lorenz attractor example");
 }
 
 const SIGMA: f64 = 10.;

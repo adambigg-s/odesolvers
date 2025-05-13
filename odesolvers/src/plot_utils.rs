@@ -1,3 +1,5 @@
+use crate::{scalar::Floating, vec3::Vec3};
+
 pub struct Buffer<T> {
     pub buff: Vec<T>,
     pub height: usize,
@@ -29,6 +31,11 @@ where
 
         let index = self.index(x, y);
         Some(self.buff[index])
+    }
+
+    pub fn get_unchecked(&self, x: usize, y: usize) -> T {
+        let index = self.index(x, y);
+        self.buff[index]
     }
 
     fn index(&self, x: usize, y: usize) -> usize {
@@ -65,12 +72,8 @@ impl LineTracer {
 
         LineTracer { x0, y0, x1, y1, dx, dy, sx, sy, err, done: false }
     }
-}
 
-impl Iterator for LineTracer {
-    type Item = (isize, isize);
-
-    fn next(&mut self) -> Option<Self::Item> {
+    fn step(&mut self) -> Option<(isize, isize)> {
         if self.done {
             return None;
         }
@@ -92,5 +95,90 @@ impl Iterator for LineTracer {
         }
 
         Some(point)
+    }
+}
+
+impl Iterator for LineTracer {
+    type Item = (isize, isize);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.step()
+    }
+}
+
+pub struct Interval<T> {
+    pub min: T,
+    pub max: T,
+}
+
+impl<T> Interval<T>
+where
+    T: Floating + Copy,
+{
+    pub fn build(min: T, max: T) -> Interval<T> {
+        Interval { min, max }
+    }
+
+    pub fn contains(&self, value: T) -> bool {
+        (self.min..self.max).contains(&value)
+    }
+
+    pub fn normalized_coordinate(&self, value: T) -> T {
+        (value - self.min) / (self.max - self.min)
+    }
+}
+
+pub struct Brush {
+    pub fg: Vec3<u8>,
+    pub bg: Vec3<u8>,
+}
+
+impl Brush {
+    pub fn build(fg: Color, bg: Color) -> Self {
+        Brush { fg, bg }
+    }
+
+    pub fn front(&mut self, r: u8, g: u8, b: u8) -> &mut Self {
+        self.fg = Color::build(r, g, b);
+        self
+    }
+
+    pub fn back(&mut self, r: u8, g: u8, b: u8) -> &mut Self {
+        self.bg = Color::build(r, g, b);
+        self
+    }
+
+    pub fn front_vec(&mut self, color: Color) -> &mut Self {
+        self.fg = color;
+        self
+    }
+
+    pub fn back_vec(&mut self, color: Color) -> &mut Self {
+        self.bg = color;
+        self
+    }
+}
+
+#[derive(Clone, Copy)]
+pub struct Cell {
+    pub front: Color,
+    pub back: Color,
+}
+
+impl Cell {
+    pub fn build(front: Color, back: Color) -> Self {
+        Cell { front, back }
+    }
+}
+
+pub type Color = Vec3<u8>;
+
+impl Color {
+    pub fn to_ansi_front(&self) -> String {
+        format!("\x1b[38;2;{};{};{}m", self.x, self.y, self.z)
+    }
+
+    pub fn to_ansi_back(&self) -> String {
+        format!("\x1b[48;2;{};{};{}m", self.x, self.y, self.z)
     }
 }

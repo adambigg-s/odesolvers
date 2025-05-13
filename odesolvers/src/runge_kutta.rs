@@ -83,3 +83,9 @@ where
         self.state()
     }
 }
+
+pub fn wait(time_ms: u64) -> bool {
+    std::thread::sleep(std::time::Duration::from_millis(time_ms));
+
+    true
+}

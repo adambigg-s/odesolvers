@@ -1,4 +1,3 @@
-use odesolvers::buffer::Buffer;
 use odesolvers::runge_kutta::Integrator;
 
 const PLOT_WIDTH: usize = 220;
@@ -10,21 +9,10 @@ fn main() {
     let final_time = 120.;
     let initial_state = [1., -10.];
     let mut integrator = Integrator::build(initial_state, dt, harmonic_oscillator_dynamics);
-    let mut buffer = Buffer::build(PLOT_WIDTH, PLOT_HEIGHT);
 
     let mut states = Vec::new();
-    let mut times = Vec::new();
     while integrator.curr_time() < final_time {
         states.push(integrator.step());
-        times.push(integrator.curr_time());
-
-        if states.len() % 100 != 0 {
-            continue;
-        }
-
-        buffer.plot_linstrip_2d(times.clone().into_iter(), states.iter().map(|state| state[0]));
-        buffer.render();
-        buffer.clear();
     }
 
     println!("harmonic oscillator example");
