@@ -1,4 +1,5 @@
-use crate::{scalar::Floating, vec3::Vec3};
+use crate::scalar::Floating;
+use crate::vec3::Vec3;
 
 pub struct Buffer<T> {
     pub buff: Vec<T>,
@@ -129,45 +130,36 @@ where
 }
 
 pub struct Brush {
-    pub fg: Vec3<u8>,
-    pub bg: Vec3<u8>,
+    pub front: Vec3<u8>,
+    pub back: Vec3<u8>,
 }
 
 impl Brush {
     pub fn build(fg: Color, bg: Color) -> Self {
-        Brush { fg, bg }
+        Brush { front: fg, back: bg }
     }
 
     pub fn front(&mut self, r: u8, g: u8, b: u8) -> &mut Self {
-        self.fg = Color::build(r, g, b);
+        self.front = Color::build(r, g, b);
         self
     }
 
     pub fn back(&mut self, r: u8, g: u8, b: u8) -> &mut Self {
-        self.bg = Color::build(r, g, b);
-        self
-    }
-
-    pub fn front_vec(&mut self, color: Color) -> &mut Self {
-        self.fg = color;
-        self
-    }
-
-    pub fn back_vec(&mut self, color: Color) -> &mut Self {
-        self.bg = color;
+        self.back = Color::build(r, g, b);
         self
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 pub struct Cell {
     pub front: Color,
     pub back: Color,
+    pub active: bool,
 }
 
 impl Cell {
     pub fn build(front: Color, back: Color) -> Self {
-        Cell { front, back }
+        Cell { front, back, active: true }
     }
 }
 

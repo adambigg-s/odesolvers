@@ -1,8 +1,5 @@
 use odesolvers::runge_kutta::Integrator;
 
-const PLOT_WIDTH: usize = 220;
-const PLOT_HEIGHT: usize = 70;
-
 fn main() {
     println!("\x1b[2J");
     let dt = 0.001;
