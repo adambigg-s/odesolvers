@@ -4,7 +4,7 @@ use std::ops::Mul;
 use crate::scalar::Floating;
 
 pub trait IntegrationStep<State> {
-    fn rk4(&mut self) -> State;
+    fn runge_kutta_4(&mut self) -> State;
 }
 
 pub trait Norm<Float> {

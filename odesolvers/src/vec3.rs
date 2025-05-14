@@ -20,6 +20,14 @@ where
     pub fn zeros() -> Self {
         Vec3 { x: T::default(), y: T::default(), z: T::default() }
     }
+
+    pub fn cast<D>(self) -> Vec3<D>
+    where
+        T: Into<D>,
+        D: Default,
+    {
+        Vec3::build(self.x.into(), self.y.into(), self.z.into())
+    }
 }
 
 impl<T> AddAssign for Vec3<T>

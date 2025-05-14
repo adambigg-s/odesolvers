@@ -49,8 +49,20 @@ impl Plot {
 
             brush: Brush::build(FOREGROUND_DEFAULT, BACKGROUND_DEFAULT),
 
-            output_string: String::new(),
+            output_string: String::from("\x1b[2J"),
         }
+    }
+
+    pub fn xbounds(&mut self, min: f32, max: f32) -> &mut Self {
+        self.xrange.min = min;
+        self.xrange.max = max;
+        self
+    }
+
+    pub fn ybounds(&mut self, min: f32, max: f32) -> &mut Self {
+        self.yrange.min = min;
+        self.yrange.max = max;
+        self
     }
 
     pub fn clear(&mut self) {
@@ -58,7 +70,7 @@ impl Plot {
         self.output_string.clear();
     }
 
-    pub fn alter_brush(&mut self) -> &mut Brush {
+    pub fn set_brush(&mut self) -> &mut Brush {
         &mut self.brush
     }
 
@@ -103,7 +115,7 @@ impl Plot {
     pub fn display(&mut self) {
         let mut curr_front = self.brush.front;
         let mut curr_back = self.brush.back;
-        self.output_string.push_str("\x1b[H");
+        self.output_string.push_str("\x1b[H\x1b[?25l");
         self.output_string.push_str(&self.brush.front.to_ansi_front());
         self.output_string.push_str(&self.brush.back.to_ansi_back());
         (0..self.plot.height).step_by(BRAILLE_HEIGHT).for_each(|y| {
@@ -121,20 +133,31 @@ impl Plot {
             });
             self.output_string.push('\n');
         });
-        self.output_string.push_str("\x1b[0m");
+        self.output_string.push_str("\x1b[?25h\x1b[0m");
 
         println!("{}", self.output_string);
         std::io::stdout().flush().unwrap();
     }
 
     fn braille_average_color(&self, x: usize, y: usize) -> (Color, Color) {
-        let (mut front, mut back) = (Vec3::zeros(), Vec3::zeros());
+        let (mut front, mut back) = (Vec3::<u16>::zeros(), Vec3::<u16>::zeros());
         let mut counter = 0;
         (0..BRAILLE_HEIGHT).for_each(|dy| {
-            (0..BRAILLE_WIDTH).for_each(|dx| {});
+            (0..BRAILLE_WIDTH).for_each(|dx| {
+                if self.plot.get_unchecked(x + dx, y + dy).active {
+                    front += self.plot.get_unchecked(x + dx, y + dy).front.cast();
+                    counter += 1;
+                }
+                back += self.plot.get_unchecked(x + dx, y + dy).back.cast();
+            });
         });
+        front /= counter.max(1);
+        back /= BRAILLE_COUNT as u16;
 
-        (front, back)
+        (
+            Vec3::build(front.x as u8, front.y as u8, front.z as u8),
+            Vec3::build(back.x as u8, back.y as u8, back.z as u8),
+        )
     }
 
     fn to_braille(&self, x: usize, y: usize) -> char {
@@ -167,4 +190,17 @@ impl Plot {
 
         (xscreen, yscreen)
     }
+}
+
+pub fn color_gradient(time: f32) -> (u8, u8, u8) {
+    let red = (0.3 + 0.7 * time.cos()) * 255.;
+    let green = (0.3 + 0.7 * (0.9 * time).cos()) * 255.;
+    let blue = (0.3 + 0.7 * (1.1 * time).cos()) * 255.;
+
+    (red as u8, green as u8, blue as u8)
+}
+
+pub fn wait(time_ms: u64) -> bool {
+    std::thread::sleep(std::time::Duration::from_millis(time_ms));
+    true
 }

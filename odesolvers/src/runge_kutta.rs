@@ -3,6 +3,7 @@ use crate::integration_shared::Norm;
 use crate::integration_shared::State;
 use crate::scalar::Floating;
 
+#[derive(Clone, Copy)]
 pub struct Integrator<Float, Dynamics, const N: usize> {
     state: State<Float, N>,
     dt: Float,
@@ -38,7 +39,11 @@ where
 
     pub fn step(&mut self) -> [Float; N] {
         self.time = self.time + self.dt;
-        self.rk4()
+        self.runge_kutta_4()
+    }
+
+    pub fn dynamic_step(&mut self) -> [Float; N] {
+        self.state()
     }
 
     pub fn solve_until(&mut self, final_time: Float) -> Vec<[Float; N]> {
@@ -65,7 +70,7 @@ where
     Float: Floating + Default + Copy,
     Dynamics: Fn(&[Float; N]) -> [Float; N],
 {
-    fn rk4(&mut self) -> [Float; N] {
+    fn runge_kutta_4(&mut self) -> [Float; N] {
         let k1 = State::build((self.ddt)(&self.state.inner));
         let k2 = State::build((self.ddt)(&(self.state + k1 * (self.dt / Float::floatify(2.))).inner));
         let k3 = State::build((self.ddt)(&(self.state + k2 * (self.dt / Float::floatify(2.))).inner));
@@ -82,10 +87,4 @@ where
 
         self.state()
     }
-}
-
-pub fn wait(time_ms: u64) -> bool {
-    std::thread::sleep(std::time::Duration::from_millis(time_ms));
-
-    true
 }

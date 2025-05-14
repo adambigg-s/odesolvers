@@ -139,12 +139,12 @@ impl Brush {
         Brush { front: fg, back: bg }
     }
 
-    pub fn front(&mut self, r: u8, g: u8, b: u8) -> &mut Self {
+    pub fn front_color(&mut self, r: u8, g: u8, b: u8) -> &mut Self {
         self.front = Color::build(r, g, b);
         self
     }
 
-    pub fn back(&mut self, r: u8, g: u8, b: u8) -> &mut Self {
+    pub fn back_color(&mut self, r: u8, g: u8, b: u8) -> &mut Self {
         self.back = Color::build(r, g, b);
         self
     }
@@ -166,11 +166,11 @@ impl Cell {
 pub type Color = Vec3<u8>;
 
 impl Color {
-    pub fn to_ansi_front(&self) -> String {
+    pub fn to_ansi_front(self) -> String {
         format!("\x1b[38;2;{};{};{}m", self.x, self.y, self.z)
     }
 
-    pub fn to_ansi_back(&self) -> String {
+    pub fn to_ansi_back(self) -> String {
         format!("\x1b[48;2;{};{};{}m", self.x, self.y, self.z)
     }
 }
