@@ -14,7 +14,7 @@ pub struct Integrator<Float, const N: usize> {
 
 impl<Float, const N: usize> Integrator<Float, N>
 where
-    Float: Floating + Default,
+    Float: Floating + Default + Copy,
 {
     const TOLERANCE: f64 = 1e-8;
 
@@ -35,7 +35,7 @@ where
     }
 
     pub fn step(&mut self) -> [Float; N] {
-        self.time = self.time + self.dt;
+        self.time += self.dt;
         self.state = State::build(self.runge_kutta_4());
         self.state()
     }
@@ -50,16 +50,15 @@ where
 
         let error = (step * Floating::floatify(-1.) + oracle.state).norm();
         if error > Floating::floatify(Self::TOLERANCE) {
-            self.dt = self.dt * Floating::floatify(0.5);
-
+            self.dt *= Floating::floatify(0.5);
             return self.dynamic_step();
         }
 
-        self.time = self.time + self.dt;
+        self.time += self.dt;
         self.state = step;
-        self.dt = self.dt * Floating::floatify(1.1);
+        self.dt *= Floating::floatify(2.);
 
-        step.values()
+        self.state()
     }
 
     pub fn solve_until(&mut self, final_time: Float) -> Vec<[Float; N]> {

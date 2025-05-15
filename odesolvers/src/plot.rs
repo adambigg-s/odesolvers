@@ -8,7 +8,7 @@ use crate::plot_utils::Interval;
 use crate::plot_utils::LineTracer;
 use crate::plot_utils::PlotSettings;
 use crate::scalar::Floating;
-use crate::vec3::Vec3;
+use crate::vector::Vec3;
 
 #[rustfmt::skip]
 const BRAILLE_MAP: [[usize; 2]; 4] = [
@@ -32,9 +32,9 @@ pub struct Plot {
     pub xrange: Interval<f32>,
     pub yrange: Interval<f32>,
 
-    pub brush: Brush,
+    brush: Brush,
 
-    pub output_string: String,
+    output_string: String,
 
     settings: PlotSettings,
 }
@@ -84,6 +84,10 @@ impl Plot {
         &mut self.brush
     }
 
+    pub fn brush_default(&mut self) {
+        self.brush = Brush::build(FOREGROUND_DEFAULT, BACKGROUND_DEFAULT);
+    }
+
     pub fn set_settings(&mut self) -> &mut PlotSettings {
         &mut self.settings
     }
@@ -94,8 +98,11 @@ impl Plot {
         self.apply_settings();
     }
 
-    pub fn brush_default(&mut self) {
-        self.brush = Brush::build(FOREGROUND_DEFAULT, BACKGROUND_DEFAULT);
+    pub fn new_plot(&mut self) {
+        self.clear();
+        (0..self.plot.height).step_by(BRAILLE_HEIGHT).for_each(|_| {
+            println!();
+        });
     }
 
     pub fn plot_point<T>(&mut self, x: T, y: T) -> bool
@@ -157,13 +164,6 @@ impl Plot {
 
         println!("{}", self.output_string);
         std::io::stdout().flush().unwrap();
-    }
-
-    pub fn new_plot(&mut self) {
-        self.clear();
-        (0..self.plot.height).step_by(BRAILLE_HEIGHT).for_each(|_| {
-            println!();
-        });
     }
 
     fn apply_settings(&mut self) {

@@ -1,7 +1,6 @@
 use std::ops::Add;
+use std::ops::AddAssign;
 use std::ops::Mul;
-
-use crate::scalar::Floating;
 
 pub type DynamicsFunction<Float, const N: usize> = fn(&[Float; N]) -> [Float; N];
 
@@ -20,7 +19,7 @@ pub struct State<Float, const N: usize> {
 
 impl<Float, const N: usize> State<Float, N>
 where
-    Float: Copy,
+    Float: Default + Copy,
 {
     pub const fn build(inner: [Float; N]) -> Self {
         State { inner }
@@ -65,12 +64,12 @@ where
 
 impl<Float, const N: usize> Norm<Float> for State<Float, N>
 where
-    Float: Floating + Add<Output = Float>,
+    Float: Mul<Output = Float> + AddAssign + Default + Copy,
 {
     fn norm(&self) -> Float {
-        let mut sum = Float::floatify(0.);
+        let mut sum = Float::default();
         (0..N).for_each(|idx| {
-            sum = sum + self.inner[idx] * self.inner[idx];
+            sum += self.inner[idx] * self.inner[idx];
         });
 
         sum

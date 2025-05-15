@@ -1,5 +1,5 @@
 use crate::scalar::Floating;
-use crate::vec3::Vec3;
+use crate::vector::Vec3;
 
 pub struct Buffer<T> {
     pub buff: Vec<T>,

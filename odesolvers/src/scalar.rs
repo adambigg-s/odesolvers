@@ -1,20 +1,28 @@
 #![allow(unexpected_cfgs)]
 
 use std::ops::Add;
+use std::ops::AddAssign;
 use std::ops::Div;
+use std::ops::DivAssign;
 use std::ops::Mul;
+use std::ops::MulAssign;
 use std::ops::Sub;
+use std::ops::SubAssign;
 
 pub trait Floating
 where
-    Self: Mul<Self, Output = Self>
-        + Div<Self, Output = Self>
-        + Add<Self, Output = Self>
+    Self: Add<Self, Output = Self>
         + Sub<Self, Output = Self>
+        + Mul<Self, Output = Self>
+        + Div<Self, Output = Self>
+        + AddAssign
+        + SubAssign
+        + MulAssign
+        + DivAssign
         + PartialOrd
         + Sized
-        + Copy
-        + PartialOrd,
+        + Default
+        + Copy,
 {
     fn floatify(value: f64) -> Self;
 
