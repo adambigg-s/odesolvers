@@ -12,4 +12,5 @@ view the 'examples' folder for some cool plots using it, and how it is used. it
 is a little more cumbersome than like a matplotlib because it has to follow Rust
 typing rules, but it is fairly simple.
 
-![alt text](https://github.com/adambigg-s/odesolvers/blob/main/demos/lorenz_attractor.gif)
+![alt text](https://github.com/adambigg-s/odesolvers/blob/main/demos/rainbow_lorenz_attractor.gif)
+![alt text](https://github.com/adambigg-s/odesolvers/blob/main/demos/harmonic_oscillator.png)

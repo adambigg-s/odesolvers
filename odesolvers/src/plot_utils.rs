@@ -174,3 +174,30 @@ impl Color {
         format!("\x1b[48;2;{};{};{}m", self.x, self.y, self.z)
     }
 }
+
+pub struct PlotSettings {
+    pub axis: bool,
+    pub subtick: bool,
+    pub subtick_spacing: f32,
+
+    pub title: bool,
+    pub xlabel: bool,
+    pub ylabel: bool,
+}
+
+impl PlotSettings {
+    pub fn axis(&mut self, toggle: bool) -> &mut Self {
+        self.axis = toggle;
+        self
+    }
+
+    pub fn subtick(&mut self, toggle: bool) -> &mut Self {
+        self.subtick = toggle;
+        self
+    }
+
+    pub fn subtick_spacing(&mut self, spacing: f32) -> &mut Self {
+        self.subtick_spacing = spacing;
+        self
+    }
+}

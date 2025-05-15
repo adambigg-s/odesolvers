@@ -6,6 +6,7 @@ use crate::plot_utils::Cell;
 use crate::plot_utils::Color;
 use crate::plot_utils::Interval;
 use crate::plot_utils::LineTracer;
+use crate::plot_utils::PlotSettings;
 use crate::scalar::Floating;
 use crate::vec3::Vec3;
 
@@ -34,9 +35,13 @@ pub struct Plot {
     pub brush: Brush,
 
     pub output_string: String,
+
+    settings: PlotSettings,
 }
 
 impl Plot {
+    const EPSILON: f32 = 1e-3;
+
     pub fn build(height: usize, width: usize) -> Self {
         Plot {
             plot: Buffer::build(
@@ -50,6 +55,16 @@ impl Plot {
             brush: Brush::build(FOREGROUND_DEFAULT, BACKGROUND_DEFAULT),
 
             output_string: String::from("\x1b[2J"),
+
+            settings: PlotSettings {
+                axis: true,
+                subtick: false,
+                subtick_spacing: 0.,
+
+                title: false,
+                xlabel: false,
+                ylabel: false,
+            },
         }
     }
 
@@ -65,13 +80,18 @@ impl Plot {
         self
     }
 
+    pub fn set_brush(&mut self) -> &mut Brush {
+        &mut self.brush
+    }
+
+    pub fn set_settings(&mut self) -> &mut PlotSettings {
+        &mut self.settings
+    }
+
     pub fn clear(&mut self) {
         self.plot.buff.fill(Cell { front: self.brush.front, back: self.brush.back, active: false });
         self.output_string.clear();
-    }
-
-    pub fn set_brush(&mut self) -> &mut Brush {
-        &mut self.brush
+        self.apply_settings();
     }
 
     pub fn brush_default(&mut self) {
@@ -144,6 +164,45 @@ impl Plot {
         (0..self.plot.height).step_by(BRAILLE_HEIGHT).for_each(|_| {
             println!();
         });
+    }
+
+    fn apply_settings(&mut self) {
+        if self.settings.subtick {
+            self.draw_subticks();
+        }
+        if self.settings.axis {
+            self.draw_axis();
+        }
+    }
+
+    fn draw_axis(&mut self) {
+        self.set_brush().front_color(100, 100, 100);
+        self.plot_line(self.xrange.min + Self::EPSILON, 0., self.xrange.max - Self::EPSILON, 0.);
+        self.plot_line(0., self.yrange.min + Self::EPSILON, 0., self.yrange.max - Self::EPSILON);
+    }
+
+    fn draw_subticks(&mut self) {
+        self.set_brush().front_color(200, 200, 200);
+        let mut axis = 0.;
+        while axis < self.xrange.max {
+            axis += self.settings.subtick_spacing;
+            self.plot_line(axis, self.yrange.min + Self::EPSILON, axis, self.yrange.max - Self::EPSILON);
+        }
+        axis = 0.;
+        while axis > self.xrange.min {
+            axis -= self.settings.subtick_spacing;
+            self.plot_line(axis, self.yrange.min + Self::EPSILON, axis, self.yrange.max - Self::EPSILON);
+        }
+        axis = 0.;
+        while axis < self.yrange.max {
+            axis += self.settings.subtick_spacing;
+            self.plot_line(self.xrange.min + Self::EPSILON, axis, self.xrange.max - Self::EPSILON, axis);
+        }
+        axis = 0.;
+        while axis > self.yrange.min {
+            axis -= self.settings.subtick_spacing;
+            self.plot_line(self.xrange.min + Self::EPSILON, axis, self.xrange.max - Self::EPSILON, axis);
+        }
     }
 
     fn braille_average_color(&self, x: usize, y: usize) -> (Color, Color) {

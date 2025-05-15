@@ -7,7 +7,7 @@ const PLOT_HEIGHT: usize = 70;
 
 fn main() {
     println!("\x1b[2J");
-    let dt = 0.01;
+    let dt = 0.05;
     let final_time = 120.;
     let initial_state = [10., -10.];
     let mut integrator = Integrator::build(initial_state, dt, harmonic_oscillator_dynamics);
@@ -15,7 +15,7 @@ fn main() {
     let mut states = Vec::new();
     let mut times = Vec::new();
     let mut plot = Plot::build(PLOT_HEIGHT, PLOT_WIDTH);
-    plot.xbounds(0., 100.);
+    plot.xbounds(-10., 120.).ybounds(-10., 10.).set_settings().subtick(true).subtick_spacing(2.);
 
     while integrator.curr_time() < final_time {
         states.push(integrator.dynamic_step());
@@ -34,8 +34,8 @@ fn main() {
     println!("harmonic oscillator example");
 }
 
-const C: f32 = 0.05;
-const K: f32 = 3.;
+const C: f32 = 0.1;
+const K: f32 = 7.;
 const M: f32 = 1.5;
 
 #[rustfmt::skip]

@@ -8,20 +8,23 @@ const PLOT_HEIGHT: usize = 70;
 fn main() {
     let dt = 0.1;
     let final_time = 120.;
-    let initial_state = [0.1, 0., -0.1];
+    let initial_state = [0.001, 0.001, 0.001];
     let mut integrator = Integrator::build(initial_state, dt, lorenz_dynamics);
 
     let mut states = Vec::new();
     let mut plot = Plot::build(PLOT_HEIGHT, PLOT_WIDTH);
-    plot.xbounds(-25., 25.).ybounds(-25., 25.).set_brush().back_color(200, 200, 200);
+    plot.xbounds(-30., 30.).ybounds(-3., 60.).set_settings().subtick(true).subtick_spacing(3.);
 
     while integrator.curr_time() < final_time {
         states.push(integrator.dynamic_step());
+        if states.len() % 5 != 0 {
+            continue;
+        }
         states.windows(2).enumerate().for_each(|(time, window)| {
             let (start, end) = (window[0], window[1]);
-            let (red, green, blue) = color_gradient(0.01 * time as f32);
+            let (red, green, blue) = color_gradient(0.001 * time as f32);
             plot.set_brush().front_color(red, green, blue);
-            plot.plot_line(start[0], start[1], end[0], end[1]);
+            plot.plot_line(start[0], start[2], end[0], end[2]);
         });
         plot.display();
         plot.clear();
