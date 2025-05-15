@@ -6,7 +6,7 @@ const PLOT_WIDTH: usize = 220;
 const PLOT_HEIGHT: usize = 70;
 
 fn main() {
-    let dt = 0.02;
+    let dt = 0.1;
     let final_time = 120.;
     let initial_state = [0.1, 0., -0.1];
     let mut integrator = Integrator::build(initial_state, dt, lorenz_dynamics);
@@ -16,7 +16,7 @@ fn main() {
     plot.xbounds(-25., 25.).ybounds(-25., 25.).set_brush().back_color(200, 200, 200);
 
     while integrator.curr_time() < final_time {
-        states.push(integrator.step());
+        states.push(integrator.dynamic_step());
         states.windows(2).enumerate().for_each(|(time, window)| {
             let (start, end) = (window[0], window[1]);
             let (red, green, blue) = color_gradient(0.01 * time as f32);

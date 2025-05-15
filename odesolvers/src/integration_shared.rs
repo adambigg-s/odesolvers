@@ -3,8 +3,10 @@ use std::ops::Mul;
 
 use crate::scalar::Floating;
 
+pub type DynamicsFunction<Float, const N: usize> = fn(&[Float; N]) -> [Float; N];
+
 pub trait IntegrationStep<State> {
-    fn runge_kutta_4(&mut self) -> State;
+    fn runge_kutta_4(&self) -> State;
 }
 
 pub trait Norm<Float> {

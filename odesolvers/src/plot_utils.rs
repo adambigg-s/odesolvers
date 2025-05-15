@@ -135,17 +135,17 @@ pub struct Brush {
 }
 
 impl Brush {
-    pub fn build(fg: Color, bg: Color) -> Self {
-        Brush { front: fg, back: bg }
+    pub fn build(front: Color, back: Color) -> Self {
+        Brush { front, back }
     }
 
-    pub fn front_color(&mut self, r: u8, g: u8, b: u8) -> &mut Self {
-        self.front = Color::build(r, g, b);
+    pub fn front_color(&mut self, red: u8, green: u8, blue: u8) -> &mut Self {
+        self.front = Color::build(red, green, blue);
         self
     }
 
-    pub fn back_color(&mut self, r: u8, g: u8, b: u8) -> &mut Self {
-        self.back = Color::build(r, g, b);
+    pub fn back_color(&mut self, red: u8, green: u8, blue: u8) -> &mut Self {
+        self.back = Color::build(red, green, blue);
         self
     }
 }

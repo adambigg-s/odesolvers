@@ -193,9 +193,9 @@ impl Plot {
 }
 
 pub fn color_gradient(time: f32) -> (u8, u8, u8) {
-    let red = (0.3 + 0.7 * time.cos()) * 255.;
-    let green = (0.3 + 0.7 * (0.9 * time).cos()) * 255.;
-    let blue = (0.3 + 0.7 * (1.1 * time).cos()) * 255.;
+    let red = (0.3 + 0.7 * time.sin()) * 255.;
+    let green = (0.3 + 0.7 * (2. + time).sin()) * 255.;
+    let blue = (0.3 + 0.7 * (4. + time).sin()) * 255.;
 
     (red as u8, green as u8, blue as u8)
 }

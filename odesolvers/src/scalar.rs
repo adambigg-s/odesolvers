@@ -13,7 +13,8 @@ where
         + Sub<Self, Output = Self>
         + PartialOrd
         + Sized
-        + Copy,
+        + Copy
+        + PartialOrd,
 {
     fn floatify(value: f64) -> Self;
 

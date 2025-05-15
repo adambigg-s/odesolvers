@@ -15,16 +15,17 @@ fn main() {
     let mut states = Vec::new();
     let mut times = Vec::new();
     let mut plot = Plot::build(PLOT_HEIGHT, PLOT_WIDTH);
-    plot.xbounds(0., 25.);
+    plot.xbounds(0., 100.);
 
     while integrator.curr_time() < final_time {
-        states.push(integrator.step());
+        states.push(integrator.dynamic_step());
         times.push(integrator.curr_time());
-        states.windows(2).enumerate().for_each(|(time, window)| {
+        states.windows(2).zip(times.windows(2)).for_each(|(window, time)| {
             let (start, end) = (window[0], window[1]);
-            let (red, green, blue) = color_gradient(0.01 * time as f32);
+            let (t0, t1) = (time[0], time[1]);
+            let (red, green, blue) = color_gradient(0.1 * t0);
             plot.set_brush().front_color(red, green, blue);
-            plot.plot_line(times[time], start[0], times[time], end[0]);
+            plot.plot_line(t0, start[0], t1, end[0]);
         });
         plot.display();
         plot.clear();
@@ -33,7 +34,7 @@ fn main() {
     println!("harmonic oscillator example");
 }
 
-const C: f32 = 0.5;
+const C: f32 = 0.1;
 const K: f32 = 3.;
 const M: f32 = 1.;
 

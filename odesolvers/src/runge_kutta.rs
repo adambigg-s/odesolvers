@@ -1,28 +1,25 @@
+use crate::integration_shared::DynamicsFunction;
 use crate::integration_shared::IntegrationStep;
 use crate::integration_shared::Norm;
 use crate::integration_shared::State;
 use crate::scalar::Floating;
 
 #[derive(Clone, Copy)]
-pub struct Integrator<Float, Dynamics, const N: usize> {
+pub struct Integrator<Float, const N: usize> {
     state: State<Float, N>,
     dt: Float,
-    ddt: Dynamics,
+    ddt: DynamicsFunction<Float, N>,
     time: Float,
 }
 
-impl<Float, Dynamics, const N: usize> Integrator<Float, Dynamics, N>
+impl<Float, const N: usize> Integrator<Float, N>
 where
     Float: Floating + Default,
-    Dynamics: Fn(&[Float; N]) -> [Float; N],
 {
-    pub fn build(state: [Float; N], delta_time: Float, dynamics_function: Dynamics) -> Self {
-        Integrator {
-            state: State::build(state),
-            dt: delta_time,
-            ddt: dynamics_function,
-            time: Float::default(),
-        }
+    const TOLERANCE: f64 = 0.00001;
+
+    pub fn build(state: [Float; N], delta_time: Float, dynamics: DynamicsFunction<Float, N>) -> Self {
+        Integrator { state: State::build(state), dt: delta_time, ddt: dynamics, time: Float::default() }
     }
 
     pub const fn state(&self) -> [Float; N] {
@@ -39,11 +36,30 @@ where
 
     pub fn step(&mut self) -> [Float; N] {
         self.time = self.time + self.dt;
-        self.runge_kutta_4()
+        self.state = State::build(self.runge_kutta_4());
+        self.state()
     }
 
     pub fn dynamic_step(&mut self) -> [Float; N] {
-        self.state()
+        let mut oracle = *self;
+        oracle.dt = self.dt * Float::floatify(0.5);
+        (0..2).for_each(|_| {
+            oracle.step();
+        });
+        let step = State::build(self.runge_kutta_4());
+
+        let error = (step * Floating::floatify(-1.) + oracle.state).norm();
+        if error > Floating::floatify(Self::TOLERANCE) {
+            self.dt = self.dt * Floating::floatify(0.5);
+
+            return self.dynamic_step();
+        }
+
+        self.time = self.time + self.dt;
+        self.state = step;
+        self.dt = self.dt * Floating::floatify(1.1);
+
+        step.values()
     }
 
     pub fn solve_until(&mut self, final_time: Float) -> Vec<[Float; N]> {
@@ -63,28 +79,39 @@ where
 
         output
     }
+
+    pub fn solve_dynamic_until(&mut self, final_time: Float) -> Vec<[Float; N]> {
+        let mut states = Vec::new();
+        while self.time < final_time {
+            states.push(self.dynamic_step());
+        }
+
+        states
+    }
+
+    pub fn solve_dynamic_with_time(&mut self, final_time: Float) -> Vec<(Float, [Float; N])> {
+        let mut output = Vec::new();
+        while self.time < final_time {
+            output.push((self.time, self.dynamic_step()));
+        }
+
+        output
+    }
 }
 
-impl<Float, Dynamics, const N: usize> IntegrationStep<[Float; N]> for Integrator<Float, Dynamics, N>
+impl<Float, const N: usize> IntegrationStep<[Float; N]> for Integrator<Float, N>
 where
     Float: Floating + Default + Copy,
-    Dynamics: Fn(&[Float; N]) -> [Float; N],
 {
-    fn runge_kutta_4(&mut self) -> [Float; N] {
+    fn runge_kutta_4(&self) -> [Float; N] {
         let k1 = State::build((self.ddt)(&self.state.inner));
         let k2 = State::build((self.ddt)(&(self.state + k1 * (self.dt / Float::floatify(2.))).inner));
         let k3 = State::build((self.ddt)(&(self.state + k2 * (self.dt / Float::floatify(2.))).inner));
         let k4 = State::build((self.ddt)(&(self.state + k3 * self.dt).inner));
 
-        self.state = self.state
+        (self.state
             + (k1 + k4) * (self.dt / Float::floatify(6.))
-            + (k2 + k3) * (self.dt / Float::floatify(3.));
-
-        let _val = self.state.norm();
-        if _val < Float::floatify(f64::EPSILON) {
-            panic!();
-        }
-
-        self.state()
+            + (k2 + k3) * (self.dt / Float::floatify(3.)))
+        .values()
     }
 }
