@@ -139,6 +139,13 @@ impl Plot {
         std::io::stdout().flush().unwrap();
     }
 
+    pub fn new_plot(&mut self) {
+        self.clear();
+        (0..self.plot.height).step_by(BRAILLE_HEIGHT).for_each(|_| {
+            println!();
+        });
+    }
+
     fn braille_average_color(&self, x: usize, y: usize) -> (Color, Color) {
         let (mut front, mut back) = (Vec3::<u16>::zeros(), Vec3::<u16>::zeros());
         let mut counter = 0;

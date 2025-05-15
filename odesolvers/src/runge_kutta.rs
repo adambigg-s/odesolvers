@@ -16,7 +16,7 @@ impl<Float, const N: usize> Integrator<Float, N>
 where
     Float: Floating + Default,
 {
-    const TOLERANCE: f64 = 0.00001;
+    const TOLERANCE: f64 = 1e-8;
 
     pub fn build(state: [Float; N], delta_time: Float, dynamics: DynamicsFunction<Float, N>) -> Self {
         Integrator { state: State::build(state), dt: delta_time, ddt: dynamics, time: Float::default() }

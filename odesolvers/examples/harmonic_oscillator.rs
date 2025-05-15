@@ -34,9 +34,9 @@ fn main() {
     println!("harmonic oscillator example");
 }
 
-const C: f32 = 0.1;
+const C: f32 = 0.05;
 const K: f32 = 3.;
-const M: f32 = 1.;
+const M: f32 = 1.5;
 
 #[rustfmt::skip]
 fn harmonic_oscillator_dynamics(state: &[f32; 2]) -> [f32; 2] {
