@@ -6,7 +6,6 @@ const PLOT_WIDTH: usize = 220;
 const PLOT_HEIGHT: usize = 70;
 
 fn main() {
-    println!("\x1b[2J");
     let dt = 0.05;
     let final_time = 120.;
     let initial_state = [10., -10.];

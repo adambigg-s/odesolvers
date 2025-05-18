@@ -1,4 +1,6 @@
+use std::collections::LinkedList;
 use std::io::Write;
+use std::ops::Deref;
 
 use crate::plot_utils::Brush;
 use crate::plot_utils::Buffer;
@@ -274,4 +276,37 @@ pub fn color_gradient(time: f32) -> (u8, u8, u8) {
 pub fn wait(time_ms: u64) -> bool {
     std::thread::sleep(std::time::Duration::from_millis(time_ms));
     true
+}
+
+pub struct StateTracker<T> {
+    pub max: usize,
+    pub states: LinkedList<T>,
+}
+
+impl<T> StateTracker<T> {
+    pub fn build(max: usize) -> Self {
+        StateTracker { max, states: LinkedList::new() }
+    }
+
+    pub fn push(&mut self, state: T) -> bool {
+        if self.states.len() > self.max {
+            self.states.pop_front();
+            self.states.push_back(state);
+            return false;
+        }
+        self.states.push_back(state);
+        true
+    }
+
+    pub fn state_pairs(&self) -> impl Iterator<Item = (&T, &T)> {
+        self.states.iter().zip(self.states.iter().skip(1))
+    }
+}
+
+impl<T> Deref for StateTracker<T> {
+    type Target = LinkedList<T>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.states
+    }
 }
