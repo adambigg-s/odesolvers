@@ -1,6 +1,7 @@
 use std::f64::consts::PI;
 
 use odesolvers::plot::color_gradient;
+use odesolvers::plot::wait;
 use odesolvers::plot::Plot;
 use odesolvers::plot::StateTracker;
 use odesolvers::runge_kutta::Integrator;
@@ -29,8 +30,17 @@ fn main() {
             let (x1, y1) = (L * end[0].sin(), -L * end[0].cos());
             plot.plot_line(x0, y0, x1, y1);
         });
+
+        // plot the cable connecting the pendulum
+        if let Some(final_state) = states.states.back() {
+            plot.set_brush().front_color(0, 0, 0);
+            plot.plot_line(0., 0., L * final_state.0[0].sin(), -L * final_state.0[0].cos());
+        }
+
         plot.display();
         plot.clear();
+
+        wait(25);
     }
 
     println!("pendulum dynamics");

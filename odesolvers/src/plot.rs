@@ -26,6 +26,7 @@ const BRAILLE_COUNT: usize = BRAILLE_HEIGHT * BRAILLE_WIDTH;
 
 const FOREGROUND_DEFAULT: Vec3<u8> = Vec3::build(0, 0, 255);
 const BACKGROUND_DEFAULT: Vec3<u8> = Vec3::build(220, 220, 220);
+const AXIS_DEFAULT: Vec3<u8> = Vec3::build(100, 100, 100);
 
 const BOUNDS_DEFAULT: f32 = 20.;
 
@@ -66,6 +67,8 @@ impl Plot {
                 title: false,
                 xlabel: false,
                 ylabel: false,
+
+                axis_color: AXIS_DEFAULT,
             },
         }
     }
@@ -183,7 +186,7 @@ impl Plot {
     }
 
     fn draw_axis(&mut self) {
-        self.set_brush().front_color(100, 100, 100);
+        self.brush = Brush::build(self.settings.axis_color, self.brush.back);
         self.plot_line(self.xrange.min + Self::EPSILON, 0., self.xrange.max - Self::EPSILON, 0.);
         self.plot_line(0., self.yrange.min + Self::EPSILON, 0., self.yrange.max - Self::EPSILON);
     }

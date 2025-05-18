@@ -183,6 +183,8 @@ pub struct PlotSettings {
     pub title: bool,
     pub xlabel: bool,
     pub ylabel: bool,
+
+    pub axis_color: Color,
 }
 
 impl PlotSettings {
@@ -198,6 +200,11 @@ impl PlotSettings {
 
     pub fn subtick_spacing(&mut self, spacing: f32) -> &mut Self {
         self.subtick_spacing = spacing;
+        self
+    }
+
+    pub fn axis_color(&mut self, red: u8, green: u8, blue: u8) -> &mut Self {
+        self.axis_color = Color::build(red, green, blue);
         self
     }
 }
