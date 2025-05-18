@@ -40,9 +40,9 @@ const M: f32 = 1.5;
 
 #[rustfmt::skip]
 fn harmonic_oscillator_dynamics(state: &[f32; 2]) -> [f32; 2] {
-    let [x, v] = state;
+    let [x, v] = *state;
     [
-        *v,
+        v,
         -K / M * x + -C / M * v,
     ]
 }

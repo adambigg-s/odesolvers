@@ -98,6 +98,10 @@ impl Plot {
         self.apply_settings();
     }
 
+    pub fn clear_string(&mut self) {
+        self.output_string.clear();
+    }
+
     pub fn new_plot(&mut self) {
         self.clear();
         (0..self.plot.height).step_by(BRAILLE_HEIGHT).for_each(|_| {
@@ -166,13 +170,14 @@ impl Plot {
         std::io::stdout().flush().unwrap();
     }
 
-    fn apply_settings(&mut self) {
+    pub fn apply_settings(&mut self) -> &mut Self {
         if self.settings.subtick {
             self.draw_subticks();
         }
         if self.settings.axis {
             self.draw_axis();
         }
+        self
     }
 
     fn draw_axis(&mut self) {

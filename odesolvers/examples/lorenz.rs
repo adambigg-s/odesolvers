@@ -17,9 +17,6 @@ fn main() {
 
     while integrator.curr_time() < final_time {
         states.push(integrator.dynamic_step());
-        if states.len() % 5 != 0 {
-            continue;
-        }
         states.windows(2).enumerate().for_each(|(time, window)| {
             let (start, end) = (window[0], window[1]);
             let (red, green, blue) = color_gradient(0.001 * time as f32);
