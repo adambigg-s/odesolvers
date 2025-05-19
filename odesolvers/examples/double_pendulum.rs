@@ -78,14 +78,14 @@ fn double_pendulum_dynamics(state: &[f32; 4]) -> [f32; 4] {
         - M2 * G * (t1 - 2. * t2).sin()
         - 2. * (t1 - t2).sin() * M2 * (w2 * w2 * L2 + w1 * w1 * L1 * (t1 - t2).cos());
     let mut w1ddt = num1 / (L1 * den_partial);
-    // linear dampening model
+    // linear damping model
     w1ddt -= C1 * w1;
 
     let num2 = 2.
         * (t1 - t2).sin()
         * (w1 * w1 * L1 * (M1 + M2) + G * (M1 + M2) * t1.cos() + w2 * w2 * L2 * M2 * (t1 - t2).cos());
     let mut w2ddt = num2 / (L2 * den_partial);
-    // linear dampening model
+    // linear damping model
     w2ddt -= C2 * w2;
 
     [t1ddt, t2ddt, w1ddt, w2ddt]
